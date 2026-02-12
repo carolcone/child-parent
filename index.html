@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinCEN SITR Ownership Tree - Interactive Demo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+      background: #f8f9fa;
+      color: #212529;
+      line-height: 1.6;
+    }
+
+    /* Header */
+    .app-header {
+      background: #1e293b;
+      color: white;
+      padding: 24px 40px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .app-header h1 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .app-header .subtitle {
+      font-size: 0.875rem;
+      color: #94a3b8;
+    }
+
+    .app-header .github-link {
+      position: absolute;
+      top: 24px;
+      right: 40px;
+      color: white;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+
+    .app-header .github-link:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    /* Tab Navigation */
+    .tab-nav {
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 0 40px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .tab-btn {
+      padding: 16px 24px;
+      border: none;
+      background: none;
+      color: #64748b;
+      font-weight: 500;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .tab-btn:hover {
+      color: #334155;
+    }
+
+    .tab-btn.active {
+      color: #3b82f6;
+      border-bottom-color: #3b82f6;
+    }
+
+    /* Tab Content */
+    .tab-content {
+      display: none;
+      padding: 40px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Interactive Demo Styles */
+    .demo-container {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 30px;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .tree-panel {
+      padding: 30px;
+      border-right: 1px solid #e2e8f0;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+    }
+
+    .panel-header h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #2563eb;
+    }
+
+    .btn-secondary {
+      background: white;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+    }
+
+    .btn-secondary:hover {
+      background: #f8fafc;
+    }
+
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: #64748b;
+      padding: 4px 8px;
+      font-size: 1rem;
+    }
+
+    .btn-ghost:hover {
+      background: #f1f5f9;
+    }
+
+    /* Stats */
+    .summary-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+      padding: 20px;
+      background: #f8fafc;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
+    }
+
+    /* Tree Nodes */
+    .tree-container {
+      position: relative;
+    }
+
+    .tree-node {
+      margin: 12px 0;
+      position: relative;
+    }
+
+    .tree-node.level-0 { margin-left: 0; }
+    .tree-node.level-1 { margin-left: 40px; }
+    .tree-node.level-2 { margin-left: 80px; }
+    .tree-node.level-3 { margin-left: 120px; }
+
+    .node-card {
+      background: white;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .node-card:hover {
+      border-color: #cbd5e1;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .node-card.selected {
+      border-color: #3b82f6;
+      background: #eff6ff;
+    }
+
+    .node-card.entity { border-left: 4px solid #3b82f6; }
+    .node-card.individual { border-left: 4px solid #10b981; }
+    .node-card.trust { border-left: 4px solid #8b5cf6; }
+
+    .node-card.individual.reportable {
+      border-left: 4px solid #f59e0b;
+      background: #fffbeb;
+    }
+
+    .node-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+
+    .node-icon {
+      font-size: 1.5rem;
+      margin-right: 10px;
+    }
+
+    .node-main {
+      flex: 1;
+    }
+
+    .node-name {
+      font-weight: 600;
+      font-size: 1rem;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+
+    .node-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .badge {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-entity { background: #dbeafe; color: #1e40af; }
+    .badge-individual { background: #d1fae5; color: #065f46; }
+    .badge-trust { background: #ede9fe; color: #5b21b6; }
+    .badge-ownership { background: #e0e7ff; color: #3730a3; font-weight: 600; }
+    .badge-role { background: #f1f5f9; color: #475569; }
+    .badge-certified { background: #d1fae5; color: #065f46; }
+    .badge-pending { background: #fef3c7; color: #92400e; }
+
+    .badge-reportable {
+      background: #fef3c7;
+      color: #92400e;
+      animation: pulse-badge 2s infinite;
+    }
+
+    @keyframes pulse-badge {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .node-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .reportable-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: #fef3c7;
+      border: 1px solid #fde68a;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #92400e;
+      margin-top: 12px;
+    }
+
+    .add-child-btn {
+      width: 100%;
+      margin-top: 12px;
+      padding: 10px;
+      border: 2px dashed #cbd5e1;
+      background: #f8fafc;
+      color: #64748b;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .add-child-btn:hover {
+      border-color: #3b82f6;
+      color: #3b82f6;
+      background: #eff6ff;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #94a3b8;
+    }
+
+    .empty-state-icon {
+      font-size: 4rem;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    /* Details Panel */
+    .details-panel {
+      background: #f8fafc;
+      padding: 30px;
+      overflow-y: auto;
+      max-height: 800px;
+    }
+
+    .form-container {
+      background: white;
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .form-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .form-header h3 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #334155;
+      margin-bottom: 6px;
+    }
+
+    .form-label.required::after {
+      content: " *";
+      color: #ef4444;
+    }
+
+    .form-input,
+    .form-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      transition: all 0.2s;
+    }
+
+    .form-input:focus,
+    .form-select:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-help {
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-top: 4px;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .alert {
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      font-size: 0.875rem;
+    }
+
+    .alert-warning {
+      background: #fef3c7;
+      border: 1px solid #fde68a;
+      color: #92400e;
+    }
+
+    .alert-error {
+      background: #fee2e2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+    }
+
+    .alert-info {
+      background: #dbeafe;
+      border: 1px solid #bfdbfe;
+      color: #1e40af;
+    }
+
+    .alert-success {
+      background: #d1fae5;
+      border: 1px solid #a7f3d0;
+      color: #065f46;
+    }
+
+    /* Documentation Styles */
+    .doc-section {
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      margin-bottom: 30px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .doc-section h2 {
+      font-size: 1.75rem;
+      margin-bottom: 16px;
+      color: #0f172a;
+    }
+
+    .doc-section h3 {
+      font-size: 1.25rem;
+      margin-top: 32px;
+      margin-bottom: 12px;
+      color: #1e293b;
+    }
+
+    .doc-section p {
+      color: #475569;
+      line-height: 1.8;
+      margin-bottom: 16px;
+    }
+
+    .doc-section ul,
+    .doc-section ol {
+      margin-left: 24px;
+      color: #475569;
+      line-height: 1.8;
+      margin-bottom: 16px;
+    }
+
+    .doc-section li {
+      margin: 8px 0;
+    }
+
+    .code-block {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+
+    .code-block .comment {
+      color: #64748b;
+    }
+
+    .code-block .keyword {
+      color: #60a5fa;
+    }
+
+    .code-block .string {
+      color: #34d399;
+    }
+
+    .code-block .number {
+      color: #fbbf24;
+    }
+
+    .highlight-box {
+      background: #eff6ff;
+      border-left: 4px solid #3b82f6;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 6px;
+    }
+
+    .highlight-box h4 {
+      color: #1e40af;
+      margin-bottom: 12px;
+      font-size: 1rem;
+    }
+
+    .highlight-box p {
+      color: #1e40af;
+      line-height: 1.6;
+    }
+
+    .critical-box {
+      background: #fef2f2;
+      border-left: 4px solid #ef4444;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 6px;
+    }
+
+    .critical-box h4 {
+      color: #991b1b;
+      margin-bottom: 12px;
+      font-size: 1rem;
+    }
+
+    .critical-box p,
+    .critical-box ul {
+      color: #991b1b;
+    }
+
+    /* Tree Connection Lines */
+    .tree-node::before {
+      content: '';
+      position: absolute;
+      left: -20px;
+      top: 28px;
+      width: 20px;
+      height: 2px;
+      background: #cbd5e1;
+    }
+
+    .tree-node.level-0::before {
+      display: none;
+    }
+
+    /* Example Grid */
+    .examples-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 24px;
+      margin-top: 32px;
+    }
+
+    .example-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 24px;
+    }
+
+    .example-card h4 {
+      font-size: 1.125rem;
+      margin-bottom: 16px;
+      color: #0f172a;
+    }
+
+    .example-tree {
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+      color: #334155;
+      line-height: 1.8;
+      background: white;
+      padding: 16px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+    }
+
+    .example-note {
+      font-size: 0.875rem;
+      color: #64748b;
+      line-height: 1.6;
+    }
+
+    .example-note strong {
+      color: #0f172a;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-header">
+    <h1>FinCEN SITR Ownership Tree</h1>
+    <p class="subtitle">Recursive data model for parent-child entity relationships and reportable individual identification</p>
+    <a href="https://github.com" class="github-link" target="_blank">
+      <span>⭐</span>
+      <span>View on GitHub</span>
+    </a>
+  </div>
+
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('demo')">Interactive Demo</button>
+    <button class="tab-btn" onclick="switchTab('concepts')">Core Concepts</button>
+    <button class="tab-btn" onclick="switchTab('implementation')">Implementation Guide</button>
+    <button class="tab-btn" onclick="switchTab('examples')">Examples</button>
+  </div>
+
+  <!-- TAB 1: INTERACTIVE DEMO -->
+  <div id="demo" class="tab-content active">
+    <div class="demo-container">
+      <!-- Left Panel: Tree -->
+      <div class="tree-panel">
+        <div class="panel-header">
+          <h2>Ownership Tree</h2>
+          <button class="btn btn-primary" onclick="alert('Add Root Entity modal would open here')">
+            <span>+</span> Add Root Entity
+          </button>
+        </div>
+
+        <div class="summary-stats">
+          <div class="stat-item">
+            <div class="stat-value">3</div>
+            <div class="stat-label">Total Nodes</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">1</div>
+            <div class="stat-label">Reportable</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">100%</div>
+            <div class="stat-label">Complete</div>
+          </div>
+        </div>
+
+        <div class="alert alert-success">
+          <strong>✓ Tree Complete:</strong> All entities have been drilled down to individuals.
+        </div>
+
+        <div class="tree-container">
+          <!-- Root Entity -->
+          <div class="tree-node level-0">
+            <div class="node-card entity selected" onclick="selectNode(this, 'Don LLC')">
+              <div class="node-header">
+                <div style="display: flex; align-items: flex-start;">
+                  <span class="node-icon">🏢</span>
+                  <div class="node-main">
+                    <div class="node-name">Don LLC</div>
+                    <div class="node-meta">
+                      <span class="badge badge-entity">Entity</span>
+                      <span class="badge badge-role">Buyer</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="node-actions">
+                  <button class="btn btn-ghost" onclick="event.stopPropagation();" title="Edit">✏️</button>
+                  <button class="btn btn-ghost" onclick="event.stopPropagation();" title="Delete">🗑️</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Child: Mark LLC -->
+            <div class="tree-node level-1">
+              <div class="node-card entity" onclick="selectNode(this, 'Mark LLC')">
+                <div class="node-header">
+                  <div style="display: flex; align-items: flex-start;">
+                    <span class="node-icon">🏢</span>
+                    <div class="node-main">
+                      <div class="node-name">Mark LLC</div>
+                      <div class="node-meta">
+                        <span class="badge badge-entity">Entity</span>
+                        <span class="badge badge-ownership">100%</span>
+                        <span class="badge badge-role">Owner</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="node-actions">
+                    <button class="btn btn-ghost" onclick="event.stopPropagation();" title="Edit">✏️</button>
+                    <button class="btn btn-ghost" onclick="event.stopPropagation();" title="Delete">🗑️</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Child: Mark Bowen -->
+              <div class="tree-node level-2">
+                <div class="node-card individual reportable" onclick="selectNode(this, 'Mark Bowen')">
+                  <div class="node-header">
+                    <div style="display: flex; align-items: flex-start;">
+                      <span class="node-icon">👤</span>
+                      <div class="node-main">
+                        <div class="node-name">Mark Bowen</div>
+                        <div class="node-meta">
+                          <span class="badge badge-individual">Individual</span>
+                          <span class="badge badge-ownership">100%</span>
+                          <span class="badge badge-role">Substantial Control</span>
+                          <span class="badge badge-certified">✓ Certified</span>
+                        </div>
+                        <div class="reportable-indicator">
+                          ⚠️ REPORTABLE — 100% effective ownership
+                        </div>
+                      </div>
+                    </div>
+                    <div class="node-actions">
+                      <button class="btn btn-ghost" onclick="event.stopPropagation();" title="Edit">✏️</button>
+                      <button class="btn btn-ghost" onclick="event.stopPropagation();" title="Delete">🗑️</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel: Details -->
+      <div class="details-panel" id="detailsPanel">
+        <div class="form-container">
+          <div class="form-header">
+            <h3>Don LLC</h3>
+            <button class="btn btn-secondary" onclick="clearSelection()">✕</button>
+          </div>
+
+          <div class="alert alert-info">
+            <strong>Entity Node:</strong> Add owners, trustees, or individuals with substantial control below this entity.
+          </div>
+
+          <form>
+            <div class="form-group">
+              <label class="form-label required">Legal Name</label>
+              <input type="text" class="form-input" value="Don LLC" placeholder="Enter legal name">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label required">Entity Type</label>
+              <select class="form-select">
+                <option>Limited Liability Company (LLC)</option>
+                <option>Corporation</option>
+                <option>Partnership</option>
+                <option>Trust</option>
+                <option>Other</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">EIN (Employer Identification Number)</label>
+              <input type="text" class="form-input" placeholder="XX-XXXXXXX" value="12-3456789">
+              <div class="form-help">Federal tax ID for this entity</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">State of Formation</label>
+              <select class="form-select">
+                <option>Delaware</option>
+                <option>Georgia</option>
+                <option>Nevada</option>
+                <option>-- Other State --</option>
+              </select>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="btn btn-secondary">Cancel</button>
+              <button type="button" class="btn btn-primary">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: CORE CONCEPTS -->
+  <div id="concepts" class="tab-content">
+    <div class="doc-section">
+      <h2>🎯 Core Concepts</h2>
+      
+      <div class="critical-box">
+        <h4>⚠️ Critical: This is NOT a Flat Form</h4>
+        <ul>
+          <li><strong>This is a recursive tree structure</strong> where entities can own other entities</li>
+          <li><strong>Reportability is computed</strong> based on effective ownership through chains</li>
+          <li><strong>You must preserve the full chain</strong> to defend indirect ownership calculations</li>
+          <li><strong>Cycle detection is mandatory</strong> to prevent circular references</li>
+        </ul>
+      </div>
+
+      <h3>What Problem This Solves</h3>
+      <p>FinCEN regulations require drilling down through entity layers to identify <strong>reportable individuals</strong>:</p>
+      <ul>
+        <li>25%+ ownership (direct OR indirect)</li>
+        <li>Substantial control persons</li>
+        <li>Signing individuals</li>
+      </ul>
+
+      <h3>Example: Why Structure Matters</h3>
+      <div class="examples-grid">
+        <div class="example-card">
+          <h4>❌ Wrong: Flat Structure</h4>
+          <div class="example-tree">
+Don LLC → Mark Bowen
+          </div>
+          <div class="example-note">
+            <strong>Problem:</strong> Lost the ownership chain. Can't calculate indirect ownership. Can't defend to FinCEN why Mark Bowen is reportable.
+          </div>
+        </div>
+
+        <div class="example-card">
+          <h4>✅ Correct: Preserve Chain</h4>
+          <div class="example-tree">
+Don LLC
+ └── Mark LLC (100%)
+      └── Mark Bowen (100%)
+          ⚠️ REPORTABLE
+          </div>
+          <div class="example-note">
+            <strong>Why reportable:</strong> 100% of Mark LLC × 100% of Don LLC = <strong>100% indirect ownership</strong> + substantial control role.
+          </div>
+        </div>
+      </div>
+
+      <h3>Data Structure</h3>
+      <div class="code-block">
+<span class="keyword">class</span> PartyNode {
+  id: <span class="keyword">string</span>
+  parent_id: <span class="keyword">string</span> | <span class="keyword">null</span>
+  node_type: <span class="string">'individual'</span> | <span class="string">'entity'</span> | <span class="string">'trust'</span>
+  role: <span class="string">'owner'</span> | <span class="string">'trustee'</span> | <span class="string">'substantial_control'</span>
+  ownership_percentage: <span class="keyword">number</span> | <span class="keyword">null</span>
+  children: PartyNode[]  <span class="comment">// ← RECURSIVE</span>
+  
+  <span class="comment">// COMPUTED (not stored):</span>
+  isReportable(): <span class="keyword">boolean</span>
+  calculateEffectiveOwnership(): <span class="keyword">number</span>
+  getDepth(): <span class="keyword">number</span>
+}
+      </div>
+
+      <h3>Reportability Rules</h3>
+      <div class="highlight-box">
+        <h4>An individual is reportable if ANY of these are true:</h4>
+        <ul>
+          <li>Role is "Substantial Control" → ALWAYS reportable</li>
+          <li>Role is "Signing Individual" → ALWAYS reportable</li>
+          <li>Effective ownership ≥ 25% → Reportable</li>
+        </ul>
+      </div>
+
+      <h3>Effective Ownership Calculation</h3>
+      <p>Multiply ownership percentages up the parent chain:</p>
+      <div class="code-block">
+<span class="comment">// Example: Bob owns 60% of Holding Co, which owns 50% of Realty LLC</span>
+Bob Johnson
+ ├─ Direct: <span class="number">60%</span> of Holding Co
+ └─ Holding Co: <span class="number">50%</span> of Realty LLC
+ 
+Effective ownership = <span class="number">0.60</span> × <span class="number">0.50</span> = <span class="number">0.30</span> (<span class="number">30%</span>)
+→ ✓ REPORTABLE (≥ 25%)
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: IMPLEMENTATION GUIDE -->
+  <div id="implementation" class="tab-content">
+    <div class="doc-section">
+      <h2>🔧 Implementation Guide</h2>
+
+      <h3>Critical Rules</h3>
+      
+      <div class="critical-box">
+        <h4>1. Cycle Detection</h4>
+        <p>Must prevent circular references at insertion time:</p>
+        <div class="code-block" style="margin-top: 12px;">
+<span class="comment">// BLOCKED: Creates circular reference</span>
+Don LLC → Mark LLC → Mark Bowen → Don LLC ❌
+
+<span class="comment">// Prevention logic:</span>
+<span class="keyword">function</span> hasAncestor(nodeId) {
+  <span class="keyword">let</span> current = <span class="keyword">this</span>
+  <span class="keyword">while</span> (current.parent_id) {
+    <span class="keyword">if</span> (current.parent_id === nodeId) <span class="keyword">return true</span>
+    current = store.getNode(current.parent_id)
+  }
+  <span class="keyword">return false</span>
+}
+        </div>
+      </div>
+
+      <div class="critical-box">
+        <h4>2. Deletion Rules</h4>
+        <p>Cannot delete node if it has children:</p>
+        <div class="code-block" style="margin-top: 12px;">
+<span class="keyword">function</span> deleteNode(nodeId) {
+  <span class="keyword">const</span> node = store.getNode(nodeId)
+  
+  <span class="keyword">if</span> (node.children.length > <span class="number">0</span>) {
+    <span class="keyword">throw new</span> Error(
+      <span class="string">`Cannot delete: has ${node.children.length} children`</span>
+    )
+  }
+  
+  <span class="comment">// OK to delete</span>
+  store.nodes.delete(nodeId)
+}
+        </div>
+      </div>
+
+      <div class="highlight-box">
+        <h4>3. Computed Reportability</h4>
+        <p>Never store as a boolean. Always calculate at runtime:</p>
+        <div class="code-block" style="margin-top: 12px;">
+<span class="keyword">function</span> isReportable() {
+  <span class="keyword">if</span> (<span class="keyword">this</span>.node_type !== <span class="string">'individual'</span>) <span class="keyword">return false</span>
+  
+  <span class="comment">// Always reportable roles</span>
+  <span class="keyword">if</span> (<span class="keyword">this</span>.role === <span class="string">'signing_individual'</span> || 
+      <span class="keyword">this</span>.role === <span class="string">'substantial_control'</span>) {
+    <span class="keyword">return true</span>
+  }
+  
+  <span class="comment">// Check ownership threshold</span>
+  <span class="keyword">return this</span>.calculateEffectiveOwnership() >= <span class="number">25</span>
+}
+        </div>
+      </div>
+
+      <h3>Database Implementation</h3>
+      
+      <h4>Option 1: Relational (PostgreSQL)</h4>
+      <div class="code-block">
+<span class="keyword">CREATE TABLE</span> party_nodes (
+  id VARCHAR <span class="keyword">PRIMARY KEY</span>,
+  parent_id VARCHAR <span class="keyword">REFERENCES</span> party_nodes(id),
+  transaction_id VARCHAR <span class="keyword">NOT NULL</span>,
+  node_type VARCHAR <span class="keyword">NOT NULL</span>,
+  role VARCHAR <span class="keyword">NOT NULL</span>,
+  ownership_percentage DECIMAL(<span class="number">5</span>,<span class="number">2</span>),
+  data JSONB,
+  certification_status VARCHAR <span class="keyword">DEFAULT</span> <span class="string">'pending'</span>
+);
+
+<span class="comment">-- Traverse with recursive CTE:</span>
+<span class="keyword">WITH RECURSIVE</span> ownership_tree <span class="keyword">AS</span> (
+  <span class="keyword">SELECT</span> * <span class="keyword">FROM</span> party_nodes 
+  <span class="keyword">WHERE</span> parent_id <span class="keyword">IS NULL</span>
+  
+  <span class="keyword">UNION ALL</span>
+  
+  <span class="keyword">SELECT</span> p.* <span class="keyword">FROM</span> party_nodes p
+  <span class="keyword">INNER JOIN</span> ownership_tree t <span class="keyword">ON</span> p.parent_id = t.id
+)
+<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> ownership_tree;
+      </div>
+
+      <h4>Option 2: Document Store (MongoDB)</h4>
+      <div class="code-block">
+{
+  transaction_id: <span class="string">"TX_001"</span>,
+  party_type: <span class="string">"buyer"</span>,
+  tree: {
+    id: <span class="string">"buyer_llc"</span>,
+    node_type: <span class="string">"entity"</span>,
+    children: [
+      {
+        id: <span class="string">"owner_1"</span>,
+        node_type: <span class="string">"individual"</span>,
+        ownership_percentage: <span class="number">60</span>,
+        children: []
+      }
+    ]
+  }
+}
+      </div>
+
+      <h3>Key Operations</h3>
+      
+      <h4>Add Child Node</h4>
+      <div class="code-block">
+<span class="keyword">function</span> addChild(parentId, childData) {
+  <span class="keyword">const</span> parent = store.getNode(parentId)
+  <span class="keyword">const</span> child = <span class="keyword">new</span> PartyNode(childData)
+  
+  <span class="comment">// 1. Cycle detection</span>
+  <span class="keyword">if</span> (parent.hasAncestor(child.id, store)) {
+    <span class="keyword">throw new</span> Error(<span class="string">'Cycle detected'</span>)
+  }
+  
+  <span class="comment">// 2. Set parent relationship</span>
+  child.parent_id = parent.id
+  
+  <span class="comment">// 3. Add to parent's children</span>
+  parent.children.push(child)
+  
+  <span class="comment">// 4. Store in database</span>
+  store.addNode(child)
+  
+  <span class="keyword">return</span> child
+}
+      </div>
+
+      <h4>Calculate Effective Ownership</h4>
+      <div class="code-block">
+<span class="keyword">function</span> calculateEffectiveOwnership() {
+  <span class="keyword">if</span> (!<span class="keyword">this</span>.ownership_percentage) <span class="keyword">return</span> <span class="number">0</span>
+  
+  <span class="keyword">let</span> effective = <span class="keyword">this</span>.ownership_percentage
+  <span class="keyword">let</span> current = <span class="keyword">this</span>
+  
+  <span class="comment">// Walk up parent chain</span>
+  <span class="keyword">while</span> (current.parent_id) {
+    current = store.getNode(current.parent_id)
+    <span class="keyword">if</span> (!current?.ownership_percentage) <span class="keyword">break</span>
+    
+    <span class="comment">// Multiply percentages</span>
+    effective *= (current.ownership_percentage / <span class="number">100</span>)
+  }
+  
+  <span class="keyword">return</span> effective
+}
+      </div>
+
+      <h4>Clone Tree for Repeat Buyer</h4>
+      <div class="code-block">
+<span class="keyword">function</span> cloneTree(sourceId, targetId) {
+  <span class="keyword">const</span> sourceRoots = store.getRootNodes(sourceId, <span class="string">'buyer'</span>)
+  
+  <span class="keyword">function</span> cloneRecursive(sourceNode) {
+    <span class="keyword">const</span> cloned = <span class="keyword">new</span> PartyNode({
+      id: <span class="string">`${targetId}_${sourceNode.id}`</span>,
+      transaction_id: targetId,
+      ...sourceNode.data,
+      created_from: sourceNode.id,
+      certification_status: <span class="string">'pending'</span> <span class="comment">// Force re-cert</span>
+    })
+    
+    <span class="keyword">for</span> (<span class="keyword">const</span> child <span class="keyword">of</span> sourceNode.children) {
+      <span class="keyword">const</span> clonedChild = cloneRecursive(child)
+      cloned.addChild(clonedChild)
+    }
+    
+    <span class="keyword">return</span> cloned
+  }
+  
+  <span class="keyword">return</span> sourceRoots.map(cloneRecursive)
+}
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: EXAMPLES -->
+  <div id="examples" class="tab-content">
+    <div class="doc-section">
+      <h2>📚 Real-World Examples</h2>
+
+      <div class="examples-grid">
+        <div class="example-card">
+          <h4>Example 1: Simple Entity Chain</h4>
+          <div class="example-tree">
+Don LLC (Buyer)
+ └── Mark LLC (100%)
+      └── Mark Bowen (100%, Substantial Control)
+          ⚠️ REPORTABLE: 100% effective ownership
+          </div>
+          <div class="example-note">
+            <strong>Why reportable:</strong> Mark Bowen has both substantial control role AND 100% effective ownership through the chain. Must report to FinCEN with full PII.
+          </div>
+        </div>
+
+        <div class="example-card">
+          <h4>Example 2: Trust with Entity Trustee</h4>
+          <div class="example-tree">
+Smith Family Trust (Buyer)
+ ├── John Smith (Trustee, Individual)
+ └── Smith Management LLC (Trustee, Entity)
+      └── Jane Smith (100%, Substantial Control)
+          ⚠️ REPORTABLE
+          </div>
+          <div class="example-note">
+            <strong>Key insight:</strong> When a trust has an entity as trustee, you must drill down to identify who controls that entity. Jane Smith controls the trustee entity, making her reportable.
+          </div>
+        </div>
+
+        <div class="example-card">
+          <h4>Example 3: Partial Ownership Below Threshold</h4>
+          <div class="example-tree">
+Realty Partners LLC (Buyer)
+ ├── Alice Johnson (20%, Owner)
+ │   ✗ NOT reportable: below 25% threshold
+ ├── Johnson Holdings Inc (50%)
+ │   └── Bob Johnson (60%, Owner)
+ │       ⚠️ REPORTABLE: 30% effective (60% × 50%)
+ └── Charlie Davis (30%, Substantial Control)
+     ⚠️ REPORTABLE: role always reportable
+          </div>
+          <div class="example-note">
+            <strong>Three different scenarios:</strong><br>
+            • Alice: 20% direct, not reportable<br>
+            • Bob: 30% indirect (60% of 50%), reportable<br>
+            • Charlie: 30% + control role, reportable
+          </div>
+        </div>
+
+        <div class="example-card">
+          <h4>Example 4: Deep Nesting (4 levels)</h4>
+          <div class="example-tree">
+PropCo LLC (Buyer)
+ └── Holdings Inc (100%)
+      └── Management LLC (100%)
+           └── Investment Partners (75%)
+                └── Sarah Chen (40%, Owner)
+                    ⚠️ REPORTABLE: 30% effective
+                    (40% × 75% × 100% × 100%)
+          </div>
+          <div class="example-note">
+            <strong>Calculation:</strong> 0.40 × 0.75 × 1.0 × 1.0 = 0.30 (30%). Even through 4 entity layers, Sarah has reportable effective ownership. The system must preserve this entire chain.
+          </div>
+        </div>
+
+        <div class="example-card">
+          <h4>Example 5: Multiple Paths (Complex)</h4>
+          <div class="example-tree">
+BuyCo LLC (Buyer)
+ ├── Family Trust (60%)
+ │   └── Tom Smith (Trustee + Beneficiary)
+ │       ⚠️ REPORTABLE: substantial control
+ └── Venture Partners (40%)
+      ├── Tom Smith (30%, Owner)
+      └── Lisa Jones (70%, Owner)
+          ⚠️ REPORTABLE: 28% effective (70% × 40%)
+          </div>
+          <div class="example-note">
+            <strong>Note:</strong> Tom Smith appears twice in different branches. The system tracks him as separate nodes but they represent the same person. Lisa has 28% effective ownership through one path.
+          </div>
+        </div>
+
+        <div class="example-card">
+          <h4>Example 6: Trust with Multiple Trustees</h4>
+          <div class="example-tree">
+Miller Family Trust (Buyer)
+ ├── David Miller (Trustee, Individual)
+ ├── Susan Miller (Trustee, Individual)
+ └── Miller Management Corp (Trustee, Entity)
+      ├── David Miller (60%, Substantial Control)
+      │   ⚠️ REPORTABLE
+      └── Susan Miller (40%, Owner)
+          ⚠️ REPORTABLE: both as trustee AND
+          16% effective through entity (40% × 40%)
+          </div>
+          <div class="example-note">
+            <strong>Complex scenario:</strong> David and Susan are individual trustees (reportable) AND they own the corporate trustee. They're reportable through multiple paths. All paths must be documented.
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 40px;">
+        <h3>Edge Cases</h3>
+        
+        <div class="critical-box">
+          <h4>❌ Attempted Deletion with Children</h4>
+          <p>User tries to delete Mark LLC, which has Mark Bowen as a child:</p>
+          <div class="code-block" style="margin-top: 12px;">
+Error: Cannot delete node mark_llc because it has 1 child node(s).
+Remove or reassign children first.
+
+<span class="comment">// Solution: Delete children first, then parent</span>
+store.deleteNode(<span class="string">'mark_bowen'</span>)  <span class="comment">// ✓ OK, leaf node</span>
+store.deleteNode(<span class="string">'mark_llc'</span>)    <span class="comment">// ✓ OK, no children now</span>
+          </div>
+        </div>
+
+        <div class="critical-box">
+          <h4>❌ Attempted Cycle Creation</h4>
+          <p>User tries to add Don LLC as a child of Mark Bowen (creating A→B→C→A cycle):</p>
+          <div class="code-block" style="margin-top: 12px;">
+Error: CYCLE DETECTED
+Cannot add node don_llc as child of mark_bowen.
+This would create a circular reference.
+
+Existing chain: Don LLC → Mark LLC → Mark Bowen
+Attempted: Mark Bowen → Don LLC ❌
+          </div>
+        </div>
+
+        <div class="highlight-box">
+          <h4>✓ Certification Cascade</h4>
+          <p>When Mark Bowen updates his address, his certification invalidates and cascades up:</p>
+          <div class="code-block" style="margin-top: 12px;">
+markBowen.data.address = <span class="string">'123 New Street'</span>
+markBowen.invalidateCertification(<span class="string">'Address updated'</span>, store)
+
+<span class="comment">// Result:</span>
+<span class="comment">// Mark Bowen: invalidated ❌</span>
+<span class="comment">// Mark LLC: invalidated (parent cascade) ❌</span>
+<span class="comment">// Don LLC: invalidated (parent cascade) ❌</span>
+<span class="comment">// → All must recertify before closing transaction</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Tab Switching
+    function switchTab(tabName) {
+      // Hide all tabs
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Remove active from all buttons
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      // Show selected tab
+      document.getElementById(tabName).classList.add('active');
+      
+      // Mark button as active
+      event.target.classList.add('active');
+    }
+
+    // Node Selection
+    function selectNode(element, nodeName) {
+      // Remove selected class from all nodes
+      document.querySelectorAll('.node-card').forEach(card => {
+        card.classList.remove('selected');
+      });
+      
+      // Add selected class to clicked node
+      element.classList.add('selected');
+      
+      // Update details panel title
+      const titleElement = document.querySelector('.form-header h3');
+      if (titleElement) {
+        titleElement.textContent = nodeName;
+      }
+    }
+
+    // Clear Selection
+    function clearSelection() {
+      document.querySelectorAll('.node-card').forEach(card => {
+        card.classList.remove('selected');
+      });
+    }
+
+    // Prevent default on demo buttons
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('.btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          if (this.textContent.includes('Cancel') || 
+              this.textContent.includes('Save Changes')) {
+            e.preventDefault();
+            alert('This is a demo interface. In production, this would save to the database.');
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
